@@ -1,5 +1,6 @@
 import pandas as pd
 
+import parseData.mBank as mbank
 import parseData.millennium as millennium
 
 
@@ -21,12 +22,12 @@ class Account:
         ]
     )
 
-    def __init__(self, file_path):
-        # recognize bank
-        self.account_number, self.data = millennium.read_millenium_data(file_path)
-        self.find_start_saldo()
-        print(self.data)
-        # injection start saldo
+    def __init__(self, file_path, bank):
+        match bank:
+            case "Millennium":
+                self.account_number, self.data = millennium.read_data(file_path)
+            case "mBank":
+                self.account_number, self.data = mbank.read_data(file_path)
 
-    def find_start_saldo(self):
         self.start_saldo = self.data.iloc[0]["balance"] - self.data.iloc[0]["amount"]
+        print(self.data)

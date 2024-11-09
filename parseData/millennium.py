@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-def read_millenium_data(file_path):
+def read_data(file_path):
     df = pd.read_csv(file_path)
     account_number = df["Numer rachunku/karty"][0]
     df = df.rename(
@@ -45,13 +45,8 @@ def read_millenium_data(file_path):
     return account_number.replace(" ", ""), data.sort_values(by=["transaction_date"])
 
 def remove_date(text):
-    # Wyrażenie regularne do dopasowania daty w formacie YYYY-MM-DD
     date_pattern = r"\d{4}-\d{2}-\d{2}"
-
-    # Usuwanie daty z napisu
     result = re.sub(date_pattern, "", text)
-
-    # Usunięcie ewentualnych dodatkowych spacji
     result = result.strip()
 
     return result
