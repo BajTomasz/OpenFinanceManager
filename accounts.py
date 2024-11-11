@@ -7,7 +7,7 @@ from account import Account
 
 class Accounts:
     accounts_list = []
-    supported_banks = ["Millennium", "mBank"]
+    supported_banks = ["Millennium", "mBank", "PKO"]
     recipients = {}
     data_dir = "data"
 
@@ -29,7 +29,7 @@ class Accounts:
         new_recipient = ""
         for account in self.accounts_list:
             for row in account.data.index:
-                new_recipient = account.data.loc[row]["recipient_account"]
+                new_recipient = account.data.loc[row]["recipient"]
                 if new_recipient not in self.recipients.keys():
                     self.recipients[new_recipient] = 0
 
@@ -37,7 +37,7 @@ class Accounts:
         self.find_all_recipients()
         for account in self.accounts_list:
             for row in account.data.index:
-                self.recipients[account.data.loc[row]["recipient_account"]] += account.data.loc[row]["amount"]
+                self.recipients[account.data.loc[row]["recipient"]] += account.data.loc[row]["amount"]
 
         self.recipients = dict(sorted(self.recipients.items(), key=lambda x: x[1], reverse=True))
 
@@ -53,8 +53,7 @@ class Accounts:
             monthly_summary = (
                 account.data.groupby("month")
                 .agg(
-                    total_income=("income", "sum"),
-                    total_expenses=("expense", "sum"),
+                    total_amount=("amount", "sum")
                 )
                 .reset_index()
             )
@@ -64,8 +63,7 @@ class Accounts:
         total_summary = (
             all_monthly_summaries.groupby("month")
             .agg(
-                total_income=("total_income", "sum"),
-                total_expenses=("total_expenses", "sum"),
+                total_amount=("total_amount", "sum")
                 # start_balance=('start_balance', 'sum')
             )
             .reset_index()
@@ -74,18 +72,15 @@ class Accounts:
         full_months = pd.DataFrame({"month": range(1, 13)})
         full_summary = full_months.merge(total_summary, on="month", how="left")
 
-        full_summary["total_income"] = full_summary["total_income"].fillna(0)
-        full_summary["total_expenses"] = full_summary["total_expenses"].fillna(0)
         full_summary["balance"] = 0
         full_summary.loc[0, "balance"] = (
-            total_start_balance + full_summary.loc[0, "total_income"] + full_summary.loc[0, "total_expenses"]
+            total_start_balance + full_summary.loc[0, "total_amount"]
         )
 
         for i in range(1, len(full_summary)):
             full_summary.loc[i, "balance"] = (
                 full_summary.loc[i - 1, "balance"]
-                + full_summary.loc[i, "total_income"]
-                + full_summary.loc[i, "total_expenses"]
+                + full_summary.loc[i, "total_amount"]
             )
 
         print(total_start_balance)

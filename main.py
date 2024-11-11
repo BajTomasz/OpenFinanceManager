@@ -16,6 +16,8 @@ def create_dirs_supported_banks():
         os.mkdir("data/Millennium")
     if not os.path.exists("data/mBank"):
         os.mkdir("data/mBank")
+    if not os.path.exists("data/PKO"):
+        os.mkdir("data/PKO")
 
 
 if __name__ == "__main__":

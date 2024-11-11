@@ -41,8 +41,6 @@ def read_data(file_path):
             "recipient",
             "recipient_account",
             "description",
-            "income",
-            "expense",
             "amount",
             "balance"
         ]
@@ -50,10 +48,10 @@ def read_data(file_path):
 
 
     for index, row in data.iterrows():
-        if len(row["recipient_account"]) == 0 :
-            if len(row["recipient"]) != 0:
-                data.at[index, "recipient_account"] = row["recipient"]
+        if pd.isna(row["recipient"]):
+            if not pd.isna(row["recipient_account"]):
+                data.at[index, "recipient"] = row["recipient_account"]
             else:
-                data.at[index, "recipient_account"] = row["description"].split("/")[0]
+                data.at[index, "recipient"] = row["description"].split("/")[0]
 
-    return account_number, data.sort_values(by=["transaction_date"])
+    return account_number, data[::-1]

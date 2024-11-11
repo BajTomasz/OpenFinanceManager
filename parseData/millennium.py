@@ -8,7 +8,6 @@ def read_data(file_path):
     account_number = df["Numer rachunku/karty"][0]
     df = df.rename(
         columns={
-            "Numer rachunku/karty": "account_number",
             "Data transakcji": "transaction_date",
             "Data rozliczenia": "settlement_date",
             "Na konto/Z konta": "recipient_account",
@@ -27,22 +26,20 @@ def read_data(file_path):
             "recipient",
             "recipient_account",
             "description",
-            "income",
-            "expense",
             "amount",
             "balance"
         ]
     ]
 
     for index, row in data.iterrows():
-        if pd.isna(row["recipient_account"]):
-            if not pd.isna(row["recipient"]):
-                data.at[index, "recipient_account"] = row["recipient"]
+        if pd.isna(row["recipient"]):
+            if not pd.isna(row["recipient_account"]):
+                data.at[index, "recipient"] = row["recipient_account"]
             else:
-                data.at[index, "recipient_account"] = remove_date(row["description"])
+                data.at[index, "recipient"] = remove_date(row["description"])
 
 
-    return account_number.replace(" ", ""), data.sort_values(by=["transaction_date"])
+    return account_number.replace(" ", ""), data[::-1]
 
 def remove_date(text):
     date_pattern = r"\d{4}-\d{2}-\d{2}"
