@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 
 from account import Account
@@ -49,12 +50,12 @@ class Accounts:
             total_start_balance += account.start_saldo
             account.data["transaction_date"] = pd.to_datetime(account.data["transaction_date"])
             account.data["month"] = account.data["transaction_date"].dt.month
+            account.data["income"] = np.where(account.data["amount"] > 0, account.data["amount"], 0)
+            account.data["expense"] = np.where(account.data["amount"] < 0, account.data["amount"], 0)
 
             monthly_summary = (
                 account.data.groupby("month")
-                .agg(
-                    total_amount=("amount", "sum")
-                )
+                .agg(total_amount=("amount", "sum"), total_income=("income", "sum"), total_expense=("expense", "sum"))
                 .reset_index()
             )
 
@@ -63,8 +64,9 @@ class Accounts:
         total_summary = (
             all_monthly_summaries.groupby("month")
             .agg(
-                total_amount=("total_amount", "sum")
-                # start_balance=('start_balance', 'sum')
+                total_amount=("total_amount", "sum"),
+                total_income=("total_income", "sum"),
+                total_expense=("total_expense", "sum"),
             )
             .reset_index()
         )
@@ -73,15 +75,10 @@ class Accounts:
         full_summary = full_months.merge(total_summary, on="month", how="left")
 
         full_summary["balance"] = 0
-        full_summary.loc[0, "balance"] = (
-            total_start_balance + full_summary.loc[0, "total_amount"]
-        )
+        full_summary.loc[0, "balance"] = total_start_balance + full_summary.loc[0, "total_amount"]
 
         for i in range(1, len(full_summary)):
-            full_summary.loc[i, "balance"] = (
-                full_summary.loc[i - 1, "balance"]
-                + full_summary.loc[i, "total_amount"]
-            )
+            full_summary.loc[i, "balance"] = full_summary.loc[i - 1, "balance"] + full_summary.loc[i, "total_amount"]
 
         print(total_start_balance)
 
@@ -95,4 +92,25 @@ class Accounts:
             recipients_df = pd.DataFrame(list(self.recipients.items()), columns=["Recipient", "Balance"])
             recipients_df.to_excel(writer, sheet_name="recipients balance", index=False)
             monthly_summary = self.divide_transactions_into_months()
-            monthly_summary.to_excel(writer, sheet_name="monthly summary", index=False)
+            sheet_name = "monthly summary"
+            monthly_summary.to_excel(writer, sheet_name=sheet_name, index=False)
+
+            workbook = writer.book
+            worksheet = writer.sheets[sheet_name]
+            chart = workbook.add_chart({"type": "line"})
+
+            for i in range(4):
+                col = i + 1
+                chart.add_series(
+                    {
+                        "name": [sheet_name, 0, col],
+                        "categories": [sheet_name, 1, 0, 11, 0],
+                        "values": [sheet_name, 1, col, 11, col],
+                    }
+                )
+
+            chart.set_x_axis({"name": "Index"})
+            chart.set_y_axis({"name": "Value", "major_gridlines": {"visible": False}})
+            worksheet.insert_chart("G2", chart)
+
+        writer.close()

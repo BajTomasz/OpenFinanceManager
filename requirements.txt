@@ -2,5 +2,6 @@ black
 isort
 flake8
 pandas
+pyinstaller
 requests
 xlsxwriter

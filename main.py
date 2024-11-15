@@ -6,7 +6,8 @@ from accounts import Accounts
 def main():
     create_dirs_supported_banks()
     accounts = Accounts()
-    accounts.save_to_xlsx()
+    if len(accounts.accounts_list):
+        accounts.save_to_xlsx()
 
 
 def create_dirs_supported_banks():
